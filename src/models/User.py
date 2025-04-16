@@ -1,4 +1,4 @@
-from ..Helpers.Helpers import Helpers
+from src.Helpers.Helpers import Helpers
 
 class User:
     def __init__(self, name: str, account_balance: float) -> None:
