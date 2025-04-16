@@ -1,0 +1,10 @@
+- [ ] Initial code to **User** Class
+- [ ] Information entry system
+- [ ] Create code to save information into **JSON** files
+- [ ] **History user**
+  - [ ] Bets placed
+  - [ ] Games won
+  - [ ] Lost games
+  - [ ] Updated balance
+- [ ] **Storing activities** in a stack
+- [ ] Implement a system of "**normal**" tables and "**popular**" tables
