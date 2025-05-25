@@ -15,12 +15,18 @@ participation in different games of chance, and the establishment's internal pro
     git pull origin main
     ```
 
-3. Add the changes with:
+3. Change branch (not working in the `main`)
+```
+Git switch {you branch name}
+```
+> Work in your branch, after...
+
+4. Add the changes with:
     ```shell
     git add .
     ```
 
-4. Commit the changes:
+5. Commit the changes:
     ```shell
     git commit -m "Your descriptive message"
     ```
