@@ -6,3 +6,13 @@
 *.egg
 *.pyc
 structure
+**/*.log
+**/log/
+**/logs/
+**/log
+**/logs
+log/
+logs/
+log
+logs
+*.log
