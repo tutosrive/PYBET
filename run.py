@@ -1,5 +1,3 @@
-# run.py
-
 from pybet.logic.HistoryStack import HistoryStack
 from pybet.logic.WaitingQueue import WaitingQueue
 
