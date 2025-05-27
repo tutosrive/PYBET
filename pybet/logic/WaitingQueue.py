@@ -1,65 +1,42 @@
+from typing import List
+from pybet.helpers.FileManager import FileManager
+from pybet.models.OperationResult import OperationResult
+
+QUEUE_FILE = './pybet/data/queue.json'
+
 class WaitingQueue:
-    """
-    Implements a basic FIFO queue to manage players waiting for a game.
-
-    Attributes:
-        queue (list[str]): Internal list storing player IDs in arrival order.
-    """
-
     def __init__(self) -> None:
-        """
-        Initializes an empty waiting queue.
-        """
-        self.queue: list[str] = []
+        # run.py ya creó queue.json con "[]"
+        res = FileManager.read_file_json(QUEUE_FILE)
+        if res.ok and isinstance(res.data, list):
+            self.queue: List[str] = res.data
+        else:
+            self.queue = []
 
-    def enqueue(self, player_id: str) -> None:
-        """
-        Adds a player ID to the end of the queue.
+    def _persist(self) -> None:
+        FileManager.write_file(QUEUE_FILE, self.queue, mode='w')
 
-        Args:
-            player_id (str): The unique identifier of the player.
-        """
+    def enqueue(self, player_id: str) -> OperationResult:
         self.queue.append(player_id)
+        self._persist()
+        return OperationResult(ok=True)
 
-    def dequeue(self) -> str:
-        """
-        Removes and returns the player ID at the front of the queue.
+    def dequeue(self) -> OperationResult:
+        if not self.queue:
+            return OperationResult(ok=False, error="Queue is empty.")
+        pid = self.queue.pop(0)
+        self._persist()
+        return OperationResult(ok=True, data=pid)
 
-        Returns:
-            str: The player ID that was waiting the longest.
+    def peek(self) -> OperationResult:
+        if not self.queue:
+            return OperationResult(ok=False, error="Queue is empty.")
+        return OperationResult(ok=True, data=self.queue[0])
 
-        Raises:
-            IndexError: If the queue is empty.
-        """
-        if self.is_empty():
-            raise IndexError("Cannot dequeue from an empty waiting queue.")
-        return self.queue.pop(0)
+    def get_all(self) -> List[str]:
+        return self.queue.copy()
 
-    def peek(self) -> str:
-        """
-        Returns the player ID at the front without removing it.
-
-        Returns:
-            str: The next player ID to be served.
-
-        Raises:
-            IndexError: If the queue is empty.
-        """
-        if self.is_empty():
-            raise IndexError("Cannot peek into an empty waiting queue.")
-        return self.queue[0]
-
-    def is_empty(self) -> bool:
-        """
-        Checks if the queue has no players.
-
-        Returns:
-            bool: True if the queue is empty, False otherwise.
-        """
-        return len(self.queue) == 0
-
-    def clear(self) -> None:
-        """
-        Empties the queue.
-        """
+    def clear(self) -> OperationResult:
         self.queue.clear()
+        self._persist()
+        return OperationResult(ok=True)
