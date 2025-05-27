@@ -1,17 +1,34 @@
+from typing import Any
+
 class OperationResult:
     """
-    Encapsulates the result of an operation, indicating success or failure and carrying data or error information.
+    Standard result wrapper for operations.
 
     Attributes:
-        success (bool): True if the operation succeeded, False otherwise.
-        data (any): The data returned by the operation, if any.
-        error (any): The error information if the operation failed.
+        ok (bool): True if operation succeeded.
+        data (Any): Result data on success.
+        error (Optional[Any]): Error message or exception on failure.
     """
 
-    def __init__(self, success: bool = True, data: any = None, error: any = None) -> None:
-        self.success: bool = success
-        self.data: any = data
-        self.error: any = error
+    def __init__(self, ok: bool = False, data: Any = None, error: Any = None) -> None:
+        """
+        Initializes an OperationResult.
+
+        Args:
+            ok (bool): Whether the operation succeeded.
+            data (Any, optional): The data returned by the operation.
+            error (Any, optional): The error if the operation failed.
+        """
+        self.ok: bool = ok
+        self.data: Any = data
+        self.error: Any = error
+
+    @property
+    def success(self) -> bool:
+        """
+        Alias for .ok to support legacy or alternate naming.
+        """
+        return self.ok
 
     def to_dict(self) -> dict:
         """
@@ -21,7 +38,7 @@ class OperationResult:
             dict: A dictionary representation of the result.
         """
         return {
-            "success": self.success,
+            "ok": self.ok,
             "data": self.data,
             "error": self.error
         }

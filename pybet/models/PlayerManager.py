@@ -1,15 +1,16 @@
 from typing import Optional, List
-
 from pybet.models.Player import Player
 from pybet.models.OperationResult import OperationResult
 from pybet.models.DataPersistence import DataPersistence
+from pybet.logic.Algorithms import Algorithms
 
 class PlayerManager:
     """
-    Provides CRUD operations for Player entities.
+    Provides CRUD operations for Player entities,
+    using Algorithms for searching.
 
-    You can override the JSON file path by passing a custom data_file
-    when constructing this manager.
+    Attributes:
+        data_file (Optional[str]): Path to the JSON file storing players.
     """
 
     def __init__(self, data_file: Optional[str] = None) -> None:
@@ -17,9 +18,10 @@ class PlayerManager:
         Initializes the PlayerManager.
 
         Args:
-            data_file (Optional[str]): Path to the JSON file storing players. If omitted, uses DataPersistence.DATA_FILE.
+            data_file (Optional[str]): Path to the JSON file storing players.
+                                        If omitted, uses DataPersistence.DATA_FILE.
         """
-        self.data_file = data_file
+        self.data_file: Optional[str] = data_file
 
     def add_player(self, name: str, balance: float) -> OperationResult:
         """
@@ -59,10 +61,10 @@ class PlayerManager:
                         False and error message on failure.
         """
         return DataPersistence.load_players(self.data_file)
-    
+
     def get_player_by_name(self, name: str) -> OperationResult:
         """
-        Finds a player by full name using linear search.
+        Finds a player by full name using Algorithms.LinearSearch.
 
         Args:
             name (str): Name to search (case-insensitive).
@@ -70,21 +72,25 @@ class PlayerManager:
         Returns:
             OperationResult:
                 ok (bool): True and data=Player if found.
-                        False and error message if not found.
+                        False and error message otherwise.
         """
         load_res = DataPersistence.load_players(self.data_file)
         if not load_res.ok:
             return load_res
 
-        for p in load_res.data:
-            if p.name.lower() == name.lower():
-                return OperationResult(ok=True, data=p)
+        players: List[Player] = load_res.data
+        # Build lowercase name list for searching
+        name_list: List[str] = [p.name.lower() for p in players]
+        idx: int = Algorithms.LinearSearch(name_list, name.lower())
 
-        return OperationResult(ok=False, error=f"Player with name '{name}' not found")
+        if idx >= 0:
+            return OperationResult(ok=True, data=players[idx])
+        else:
+            return OperationResult(ok=False, error=f"Player with name '{name}' not found")
 
     def get_player_by_id(self, player_id: str) -> OperationResult:
         """
-        Finds a player by UUID using binary search over sorted IDs.
+        Finds a player by UUID using Algorithms.BinarySearch over sorted IDs.
 
         Args:
             player_id (str): The UUID string of the player.
@@ -98,18 +104,16 @@ class PlayerManager:
         if not load_res.ok:
             return load_res
 
-        players: List[Player] = sorted(load_res.data, key=lambda p: p.id)
-        low, high = 0, len(players) - 1
-        while low <= high:
-            mid = (low + high) // 2
-            if players[mid].id == player_id:
-                return OperationResult(ok=True, data=players[mid])
-            if players[mid].id < player_id:
-                low = mid + 1
-            else:
-                high = mid - 1
+        players: List[Player] = load_res.data
+        # Sort players by ID
+        sorted_players: List[Player] = sorted(players, key=lambda p: p.id)
+        id_list: List[str] = [p.id for p in sorted_players]
+        idx: int = Algorithms.BinarySearch(id_list, player_id)
 
-        return OperationResult(ok=False, error=f"Player with ID '{player_id}' not found")
+        if idx >= 0:
+            return OperationResult(ok=True, data=sorted_players[idx])
+        else:
+            return OperationResult(ok=False, error=f"Player with ID '{player_id}' not found")
 
     def update_player(self, player_id: str, new_name: Optional[str] = None, new_balance: Optional[float] = None) -> OperationResult:
         """
@@ -121,28 +125,32 @@ class PlayerManager:
             new_balance (Optional[float]): New balance (>= 0).
 
         Returns:
-            OperationResult:
-                ok (bool): True and data=updated Player on success.
-                        False and error message on failure.
+            OperationResult: ok/data=updated Player; error otherwise.
         """
+        # 1. Load once
         load_res = DataPersistence.load_players(self.data_file)
         if not load_res.ok:
             return load_res
 
         players: List[Player] = load_res.data
-        for p in players:
+        # 2. Find index in the SAME list
+        for idx, p in enumerate(players):
             if p.id == player_id:
+                # 3. Modify in place
                 if new_name:
                     p.name = new_name
                 if new_balance is not None:
                     if new_balance < 0:
                         return OperationResult(ok=False, error="Balance cannot be negative")
                     p.account_balance = new_balance
-
+                # 4. Persist entire list
                 save_res = DataPersistence.save_players(players, self.data_file)
-                return save_res.ok and OperationResult(ok=True, data=p) or save_res
+                if not save_res.ok:
+                    return save_res
+                return OperationResult(ok=True, data=p)
 
         return OperationResult(ok=False, error=f"Player with ID '{player_id}' not found")
+
 
     def delete_player(self, player_id: str) -> OperationResult:
         """
@@ -152,19 +160,22 @@ class PlayerManager:
             player_id (str): UUID of the player to delete.
 
         Returns:
-            OperationResult:
-                ok (bool): True and data=deleted Player on success.
-                        False and error message on failure.
+            OperationResult: ok/data=deleted Player; error otherwise.
         """
+        # 1. Load once
         load_res = DataPersistence.load_players(self.data_file)
         if not load_res.ok:
             return load_res
 
         players: List[Player] = load_res.data
+        # 2. Find and remove
         for idx, p in enumerate(players):
             if p.id == player_id:
                 removed = players.pop(idx)
+                # 3. Persist updated list
                 save_res = DataPersistence.save_players(players, self.data_file)
-                return save_res.ok and OperationResult(ok=True, data=removed) or save_res
+                if not save_res.ok:
+                    return save_res
+                return OperationResult(ok=True, data=removed)
 
         return OperationResult(ok=False, error=f"Player with ID '{player_id}' not found")
