@@ -5,11 +5,12 @@ from pybet.games.guessing_game import play_guessing
 def play_games() -> None:
     """
     Displays a menu for the user to choose between two games:
-        1) Tragamonedas
-        2) Adivinanzas
+        1) Tragamonedas (Slot Machine)
+        2) Adivinanzas (Guessing Game)
 
-    For each option:
-        - Calls the corresponding function from its own module.
+    Each game now implements:
+      - Tragamonedas: brute‐force combination generation
+      - Adivinanzas: tail recursion to compute optimal attempts
     """
     manager = PlayerManager()
 
