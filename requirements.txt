@@ -1,2 +1,3 @@
 chromologger==0.1.8
 chromolog==0.2.4
+rich==14.0.0
