@@ -1,31 +1,100 @@
-from typing import Optional
+"""
+Guessing Game (“Adivinanzas”) module with tail recursion to compute optimal attempts.
+
+This version first computes, via a tail‐recursive function, 
+the minimum worst‐case number of guesses needed to find a secret number
+in a given range [1..N]. Then it lets the user play once.
+
+Steps:
+1. Prompt for player ID → verify existence and load current balance.
+2. Prompt for bet amount → validate > 0 and ≤ balance.
+3. Prompt for range limit N (e.g., “¿Hasta qué número quieres jugar?”).
+    -- Compute optimal worst‐case attempts using tail recursion.
+    -- Display that “You will need at most X attempts (worst case).”
+4. Generate a random “secret” integer ∈ [1..N].
+5. Let the user guess up to X times; for each:
+    - If guess == secret → award = 4×bet, break and win.
+    - If guess ≠ secret and attempts remain → inform higher or lower.
+6. If user did not guess in X attempts → they lose the bet.
+7. Update balance accordingly, record a descriptive string in PlayerHistory, display result.
+
+Docstring tags:
+    - Manager: PlayerManager instance
+    - OperationResult: for reading/updating JSON
+    - PlayerHistory: to push a descriptive string
+"""
+
 import random
+from typing import Optional, Tuple
+
 from pybet.models.PlayerManager import PlayerManager
 from pybet.models.OperationResult import OperationResult
 from pybet.logic.PlayerHistory import PlayerHistory
 
+
+def tail_recursive_optimal(low: int, high: int, attempts: int = 0) -> int:
+    """
+    Tail‐recursive helper to compute the minimum number of worst‐case guesses needed
+    to find any secret in the interval [low..high], assuming an optimal “binary‐search colored” strategy.
+
+    Returns:
+        int: Minimum worst‐case number of attempts.
+    """
+    # Base case: if interval size is 1, only one attempt needed
+    size = high - low + 1
+    if size <= 1:
+        return attempts + 1
+
+    # Choose pivot as the middle guess: mid = (low + high) // 2
+    mid = (low + high) // 2
+
+    # Splitting into two subintervals: [low..mid-1] and [mid+1..high]
+    # Worst‐case size is the larger half
+    left_size = mid - 1 - low + 1
+    right_size = high - (mid + 1) + 1
+
+    # Determine which side is larger, and recurse on that side
+    if left_size >= right_size:
+        # Worst‐case secret lies in left side
+        return tail_recursive_optimal(low, mid - 1, attempts + 1)
+    else:
+        # Worst‐case secret lies in right side
+        return tail_recursive_optimal(mid + 1, high, attempts + 1)
+
+
 def play_guessing(manager: PlayerManager) -> None:
     """
-    Simulates a “Adivinanzas” (Guessing) play:
-        - Prompts for player ID and bet amount.
-        - Verifies player existence and sufficient balance.
-        - Generates a random number between 1 and 5; player must guess.
-        - If guessed correctly, player wins 4× bet; otherwise loses the bet.
-        - Updates the player’s balance in players.json via PlayerManager.
-        - Records the play in the player’s history via PlayerHistory.
-        - Displays the result on screen.
+    Simulates a “Adivinanzas” (Guessing Game) with tail recursion for optimal attempts.
+
+    Procedure:
+        1. Prompt for player ID → verify existence and get current balance.
+        2. Prompt for bet amount → validate > 0 and ≤ balance.
+        3. Prompt for “range limit” N (integer ≥ 2).
+            - Compute minimum worst‐case attempts via tail‐recursive function.
+            - Display to user: “In the worst case, you need X attempts to guess a number from 1 to N.”
+        4. Generate a random secret ∈ [1..N].
+        5. Loop up to X times:
+            a. Prompt “Guess a number (1–N):”
+            b. If guess == secret → reward = 4×bet; break & won.
+            c. If guess < secret → print “Más alto.”
+            If guess > secret → print “Más bajo.”
+        6. If user never guessed in X attempts → they lose (reward = –bet).
+        7. Update player balance and record one descriptive string in PlayerHistory:
+            e.g. “Adivinanzas: Range=1–N, bet=B, secret=S, outcome=won/lost, balance=…”
+        8. Print final result.
 
     Args:
-        manager (PlayerManager): Instance of PlayerManager to load/update players.
+        manager (PlayerManager): Instance to load/update players.json.
     """
-    player_id: str = input("ID de jugador: ").strip()
-    get_player_res: OperationResult = manager.get_player_by_id(player_id)
-    if not get_player_res.ok:
-        print("Error:", get_player_res.error)
+    player_id = input("ID de jugador: ").strip()
+    get_res: OperationResult = manager.get_player_by_id(player_id)
+    if not get_res.ok:
+        print("Error:", get_res.error)
         return
 
-    player = get_player_res.data  # type: ignore  # Instancia Player
-    bet_str: str = input("Monto a apostar: ").strip()
+    player = get_res.data  # type: ignore  # Player instance
+
+    bet_str = input("Monto a apostar: ").strip()
     try:
         bet: float = float(bet_str)
     except ValueError:
@@ -40,32 +109,69 @@ def play_guessing(manager: PlayerManager) -> None:
         print("Saldo insuficiente para esa apuesta.")
         return
 
-    # Generate secret number 1–5
-    secret: int = random.randint(1, 5)
-    guess_str: str = input("Adivina el número (1-5): ").strip()
+    # —— Determine the numeric range for guessing ——
+    n_str = input("¿Hasta qué número quieres jugar? (Ingrese entero ≥ 2): ").strip()
     try:
-        guess: int = int(guess_str)
+        N: int = int(n_str)
     except ValueError:
-        print("Número inválido. Debe ser un entero entre 1 y 5.")
+        print("Número inválido. Debe ser un entero.")
         return
 
-    if guess < 1 or guess > 5:
-        print("Número fuera de rango. Debe ser entre 1 y 5.")
+    if N < 2:
+        print("El número debe ser al menos 2.")
         return
 
-    if guess == secret:
-        reward: float = bet * 4
-        new_balance: float = player.account_balance + reward
-        result_str: str = (
-            f"Adivinanzas: Apostó {bet}, adivinó {secret}, ganó {reward}, saldo {new_balance}"
-        )
-    else:
+    # Compute, via tail recursion, the minimum worst‐case attempts
+    optimal_attempts = tail_recursive_optimal(1, N, 0)
+    print(f"En el peor de los casos, necesitas {optimal_attempts} intentos para adivinar un número entre 1 y {N}.")
+
+    # —— Generate the secret number _______
+    secret = random.randint(1, N)
+
+    # —— Let the player guess up to optimal_attempts times ——
+    guess_count = 0
+    won = False
+    while guess_count < optimal_attempts:
+        guess_str = input(f"Adivina el número (intento {guess_count + 1}/{optimal_attempts}): ").strip()
+        try:
+            guess = int(guess_str)
+        except ValueError:
+            print("Número inválido. Debe ser un entero entre 1 y", N)
+            continue
+
+        if guess < 1 or guess > N:
+            print("Número fuera de rango. Debe ser entre 1 y", N)
+            continue
+
+        guess_count += 1
+        if guess == secret:
+            # Player wins: payout is 4× bet
+            reward = bet * 4
+            new_balance = player.account_balance + reward
+            print(f"¡Correcto! Ganaste {reward}.")
+            won = True
+            break
+        else:
+            # Not correct. Provide a hint, unless it was the last attempt.
+            if guess < secret:
+                print("Más alto.")
+            else:
+                print("Más bajo.")
+
+    # If did not win after all attempts → lose bet
+    if not won:
         new_balance = player.account_balance - bet
-        result_str = (
-            f"Adivinanzas: Apostó {bet}, falló (salió {secret}), perdió {bet}, saldo {new_balance}"
-        )
+        print(f"Lo siento, no lo adivinaste. Perdiste {bet}. El número era {secret}.")
 
-    # Update balance in JSON
+    # Build a descriptive history entry
+    if won:
+        outcome_str = f"adivinó {secret}, ganó {reward}, saldo {new_balance}"
+    else:
+        outcome_str = f"falló (salió {secret}), perdió {bet}, saldo {new_balance}"
+
+    result_str = f"Adivinanzas: Rango 1–{N}, apostó {bet}, {outcome_str}"
+
+    # Update the player’s balance in JSON
     upd_res: OperationResult = manager.update_player(player_id, None, new_balance)
     if not upd_res.ok:
         print("Error al actualizar balance:", upd_res.error)
@@ -77,5 +183,6 @@ def play_guessing(manager: PlayerManager) -> None:
     if not push_res.ok:
         print("Error al registrar historial:", push_res.error)
 
+    # Display final line for clarity
     print("\nResultado Adivinanzas:")
     print(result_str)
