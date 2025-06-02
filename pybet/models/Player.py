@@ -1,47 +1,44 @@
-from pybet.helpers.FileManager import FileManager
-import uuid
+from __future__ import annotations
+from typing import Any, Dict, Optional, List
+import datetime
 
 class Player:
     """
-    Represents a casino player with a unique identifier, name, and account balance.
+    Represents a casino player with individual history.
 
     Attributes:
-        id (str): Unique identifier for the player.
-        name (str): Full name of the player.
-        account_balance (float): Current balance of the player's account (must be non-negative).
+        id (str): Unique identifier.
+        name (str): Full name.
+        account_balance (float): Current balance.
+        created_at (str): ISO timestamp of creation.
+        history (List[str]): Last up to 10 actions.
     """
 
-    def __init__(self, name: str, account_balance: float) -> None:
+    def __init__(self, player_id: str, name: str, account_balance: float, created_at: Optional[str] = None, history: Optional[List[str]] = None) -> None:
         if account_balance < 0:
-            raise ValueError("Account balance cannot be negative.")
-        self.id: str = str(uuid.uuid4())
-        self.name: str = name
-        self.account_balance: float = account_balance
+            raise ValueError("Initial balance cannot be negative.")
 
-    def to_dict(self) -> dict:
-        """
-        Converts the Player instance to a dictionary for JSON serialization.
+        self.id = player_id
+        self.name = name
+        self.account_balance = account_balance
+        self.created_at = created_at or datetime.datetime.utcnow().isoformat()
+        self.history: List[str] = history or []
 
-        Returns:
-            dict: A dictionary representation of the player.
-        """
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> Player:
+        return cls(
+            player_id=data["id"],
+            name=data["name"],
+            account_balance=data["account_balance"],
+            created_at=data.get("created_at"),
+            history=data.get("history", [])
+        )
+
+    def to_dict(self) -> Dict[str, Any]:
         return {
             "id": self.id,
             "name": self.name,
-            "account_balance": self.account_balance
+            "account_balance": self.account_balance,
+            "created_at": self.created_at,
+            "history": self.history[-10:],  # keep last 10
         }
-
-    @classmethod
-    def from_dict(cls, data: dict) -> 'Player':
-        """
-        Creates a Player instance from a dictionary.
-
-        Args:
-            data (dict): Dictionary with keys 'id', 'name', and 'account_balance'.
-
-        Returns:
-            Player: A new Player instance.
-        """
-        player = cls(name=data["name"], account_balance=data["account_balance"])
-        player.id = data["id"]  # preserve original ID
-        return player

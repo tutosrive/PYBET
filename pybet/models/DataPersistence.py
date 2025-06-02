@@ -1,74 +1,74 @@
 from pathlib import Path
-from typing import List, Optional
+from typing import Dict, Any, Optional, List
+
 from pybet.helpers.FileManager import FileManager
 from pybet.models.OperationResult import OperationResult
 from pybet.models.Player import Player
 
+PLAYERS_FILE = './pybet/data/players.json'
+
 class DataPersistence:
     """
-    Manages loading and saving of Player data via JSON files.
-
-    Attributes:
-        DATA_FILE (str): Default path to the players JSON file.
+    Manages loading and saving of all player data in one JSON mapping.
+    Each player is stored under their unique ID as key.
     """
 
-    DATA_FILE: str = './pybet/data/players.json'
-
     @staticmethod
-    def load_players(data_file: Optional[str] = None) -> OperationResult:
+    def load_players_map() -> OperationResult:
         """
-        Reads the JSON file at DATA_FILE (or at data_file if provided),
-        parses it into Player objects.
-
-        If the file does not exist, creates it as an empty JSON list.
-
-        Args:
-            data_file (Optional[str]): Override path to JSON file.
+        Loads the full players.json as a mapping id → player-dict.
 
         Returns:
             OperationResult:
-                ok (bool): True if read+parsed successfully.
-                data (List[Player]): On success, list of Player instances.
-                error (str): Error message on failure.
+                ok (bool): True if load succeeded.
+                data (Dict[str, Any]): Mapping of all players if ok.
+                error (str): Error message otherwise.
         """
-        path_str = data_file if data_file else DataPersistence.DATA_FILE
-        path = Path(path_str)
-        if not path.exists():
-            # inicializar como lista vacía
-            FileManager.write_file(path_str, [], mode='w')
+        # Ensure directory exists
+        Path(PLAYERS_FILE).parent.mkdir(parents=True, exist_ok=True)
+        # If file does not exist, initialize as empty dict
+        if not Path(PLAYERS_FILE).exists():
+            FileManager.write_file(PLAYERS_FILE, {}, mode='w')
 
-        raw = FileManager.read_file_json(path_str)
+        raw = FileManager.read_file_json(PLAYERS_FILE)
         if not raw.ok:
-            return OperationResult(ok=False, error=raw.error)
+            return raw
+
+        data = raw.data
+        if not isinstance(data, dict):
+            return OperationResult(ok=False, error="players.json corrupted (expected a JSON object).")
+        return OperationResult(ok=True, data=data)
+
+    @staticmethod
+    def save_players_map(players_map: Dict[str, Any]) -> OperationResult:
+        """
+        Persists the entire mapping to players.json.
+
+        Args:
+            players_map (Dict[str, Any]): The full mapping of players.
+
+        Returns:
+            OperationResult: ok=True if save succeeded; error otherwise.
+        """
+        return FileManager.write_file(PLAYERS_FILE, players_map, mode='w')
+
+    @staticmethod
+    def load_all_players() -> OperationResult:
+        """
+        Returns a list of Player instances built from the mapping.
+
+        Returns:
+            OperationResult:
+                ok (bool): True if load+parse succeeded.
+                data (List[Player]): List of all Player objects if ok.
+                error (str): Error message otherwise.
+        """
+        map_res = DataPersistence.load_players_map()
+        if not map_res.ok:
+            return map_res
 
         try:
-            players = [Player.from_dict(d) for d in raw.data]
+            players = [Player.from_dict(v) for v in map_res.data.values()]
             return OperationResult(ok=True, data=players)
         except Exception as e:
-            return OperationResult(ok=False, error=f'Error parsing player data: {e}')
-
-    @staticmethod
-    def save_players(players: List[Player], data_file: Optional[str] = None) -> OperationResult:
-        """
-        Serializes a list of Player instances to JSON and writes it to DATA_FILE
-        (or to data_file if provided).
-
-        Args:
-            players (List[Player]): The list of players to save.
-            data_file (Optional[str]): Override path to JSON file.
-
-        Returns:
-            OperationResult:
-                ok (bool): True if written successfully.
-                error (str): Error message on failure.
-        """
-        path_str = data_file if data_file else DataPersistence.DATA_FILE
-        try:
-            payload = [p.to_dict() for p in players]
-            write_res = FileManager.write_file(path_str, payload, mode='w')
-            if write_res.ok:
-                return OperationResult(ok=True)
-            else:
-                return OperationResult(ok=False, error=write_res.error)
-        except Exception as e:
-            return OperationResult(ok=False, error=f'Error saving player data: {e}')
+            return OperationResult(ok=False, error=f"Error parsing players: {e}")

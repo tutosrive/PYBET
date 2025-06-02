@@ -1,16 +1,14 @@
 from typing import Optional
 from pybet.models.PlayerManager import PlayerManager
-from pybet.models.DataPersistence import DataPersistence
 from pybet.models.Player import Player
 from pybet.models.OperationResult import OperationResult
-
-DATA_FILE: str = './pybet/data/players.json'
 
 def manage_players() -> None:
     """
     Menu for managing player operations: list, add, update, delete.
+    Relies on PlayerManager, which uses a single players.json mapping.
     """
-    manager: PlayerManager = PlayerManager(DATA_FILE)
+    manager = PlayerManager()
 
     while True:
         print("\n--- Manage Players ---")
