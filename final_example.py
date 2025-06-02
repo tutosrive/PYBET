@@ -1,5 +1,3 @@
-# examples.py
-
 """
 Example script to demonstrate that the PYBET casino system is fully functional,
 covering all features specified in the project PDF. This includes:
