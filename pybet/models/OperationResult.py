@@ -7,7 +7,7 @@ class OperationResult:
     Attributes:
         ok (bool): True if operation succeeded.
         data (Any): Result data on success.
-        error (Optional[Any]): Error message or exception on failure.
+        error (Any): Error message or exception on failure.
     """
 
     def __init__(self, ok: bool = False, data: Any = None, error: Any = None) -> None:

@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, List
 
 from pybet.helpers.FileManager import FileManager
 from pybet.models.OperationResult import OperationResult

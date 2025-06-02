@@ -2,11 +2,13 @@
     "KAAMG2": {
         "id": "KAAMG2",
         "name": "Alice",
-        "account_balance": 1400,
+        "account_balance": 1390.0,
         "created_at": "2025-06-02T17:17:57.157541",
         "history": [
             "Tragamonedas (Slots): Apostó 200, perdió 200, saldo 800",
-            "Adivinanzas: Apostó 150, eligió 2, ganó 600, saldo 1400"
+            "Adivinanzas: Apostó 150, eligió 2, ganó 600, saldo 1400",
+            "Tragamonedas: Apostó 10.0, ganó 10.0, saldo 1410.0",
+            "Adivinanzas: Apostó 20.0, falló (salió 4), perdió 20.0, saldo 1390.0"
         ]
     },
     "YPWKS6": {

@@ -4,8 +4,8 @@ T = TypeVar('T')
 
 class Algorithms:
     """
-    Collection of classic algorithms: linear search, binary search, and
-    simple sorting algorithms implemented from scratch, generic over type T.
+    Collection of classic algorithms: linear search, binary search,
+    and simple sorting algorithms implemented from scratch, generic over type T.
     """
 
     @staticmethod
@@ -42,7 +42,6 @@ class Algorithms:
             mid = (left + right) // 2
             if sorted_data[mid] == target:
                 return mid
-            # Note: comparison must be meaningful for T
             if sorted_data[mid] < target:
                 left = mid + 1
             else:

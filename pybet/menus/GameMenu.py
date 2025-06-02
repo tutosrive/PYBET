@@ -7,17 +7,17 @@ from pybet.logic.PlayerHistory import PlayerHistory
 
 def play_games() -> None:
     """
-    Presenta un menú para que el usuario elija entre dos juegos:
+    Displays a menu for the user to choose between two games:
         1) Tragamonedas
         2) Adivinanzas
 
-    Para cada juego:
-        - Se solicita ID de jugador y monto de apuesta.
-        - Se valida que el jugador exista y tenga saldo suficiente.
-        - Se simula un resultado sencillo (para registrar histórico y actualizar saldo).
-        - Se actualiza el balance en players.json mediante PlayerManager.
-        - Se registra la jugada en PlayerHistory.
-        - Se muestra el resultado en pantalla.
+    For each game:
+        - Prompts for player ID and bet amount.
+        - Validates that the player exists and has sufficient balance.
+        - Simulates a simple outcome (to record in history and update balance).
+        - Updates the player's balance via PlayerManager.
+        - Logs the play in PlayerHistory.
+        - Shows the result on screen.
     """
     manager = PlayerManager()
 
@@ -40,22 +40,20 @@ def play_games() -> None:
 
 def _play_slots(manager: PlayerManager) -> None:
     """
-    Simula una jugada sencilla de “Tragamonedas”:
-        - Pide ID de jugador y monto de apuesta.
-        - Verifica existencia y saldo.
-        - Gana el jugador con probabilidad 50%: recupera apuesta + premio igual a apuesta.
-        - En caso contrario, pierde la apuesta.
-        - Actualiza saldo y registra historial con PlayerHistory.
+    Simulates a simple “Slots” play:
+        - Requests player ID and bet amount.
+        - Verifies existence and balance.
+        - 50% chance to win: returns bet plus a prize equal to bet.
+        - Otherwise loses the bet.
+        - Updates balance and registers history with PlayerHistory.
     """
     player_id = input("ID de jugador: ").strip()
-    # Verificar que exista
-    get_p = manager.get_player_by_id(player_id)
-    if not get_p.ok:
-        print("Error:", get_p.error)
+    get_player_res: OperationResult = manager.get_player_by_id(player_id)
+    if not get_player_res.ok:
+        print("Error:", get_player_res.error)
         return
 
-    player = get_p.data  # instancia Player
-    # Pedir monto de apuesta
+    player = get_player_res.data  # instance of Player
     bet_str = input("Monto a apostar: ").strip()
     try:
         bet = float(bet_str)
@@ -71,25 +69,23 @@ def _play_slots(manager: PlayerManager) -> None:
         print("Saldo insuficiente para esa apuesta.")
         return
 
-    # Simular resultado 50/50
+    # Simulate 50/50 result
     win = random.choice([True, False])
     if win:
-        # Gana: se le acredita apuesta de vuelta + ganancia
-        reward = bet  # premio igual a la apuesta
+        reward = bet  # prize equal to bet
         new_balance = player.account_balance + reward
         result_str = f"Tragamonedas: Apostó {bet}, ganó {reward}, saldo {new_balance}"
     else:
-        # Pierde: resta apuesta
         new_balance = player.account_balance - bet
         result_str = f"Tragamonedas: Apostó {bet}, perdió {bet}, saldo {new_balance}"
 
-    # Actualizar dato en JSON
+    # Update balance in JSON
     upd_res: OperationResult = manager.update_player(player_id, None, new_balance)
     if not upd_res.ok:
         print("Error al actualizar balance:", upd_res.error)
         return
 
-    # Registrar en historial individual
+    # Log in player's history
     hist = PlayerHistory(player_id)
     push_res = hist.push(result_str)
     if not push_res.ok:
@@ -101,20 +97,20 @@ def _play_slots(manager: PlayerManager) -> None:
 
 def _play_guessing(manager: PlayerManager) -> None:
     """
-    Simula una jugada sencilla de “Adivinanzas”:
-        - Pide ID de jugador y monto de apuesta.
-        - Verifica existencia y saldo.
-        - Genera un número aleatorio entre 1 y 5. El jugador adivina.
-        - Si acierta, gana 4× apuesta; si falla, pierde la apuesta.
-        - Actualiza saldo y registra historial con PlayerHistory.
+    Simulates a simple “Guessing” game:
+        - Requests player ID and bet amount.
+        - Verifies existence and balance.
+        - Generates a random number 1–5; player guesses.
+        - If correct, wins 4× bet; if wrong, loses the bet.
+        - Updates balance and registers history with PlayerHistory.
     """
     player_id = input("ID de jugador: ").strip()
-    get_p = manager.get_player_by_id(player_id)
-    if not get_p.ok:
-        print("Error:", get_p.error)
+    get_player_res: OperationResult = manager.get_player_by_id(player_id)
+    if not get_player_res.ok:
+        print("Error:", get_player_res.error)
         return
 
-    player = get_p.data
+    player = get_player_res.data
     bet_str = input("Monto a apostar: ").strip()
     try:
         bet = float(bet_str)
@@ -130,7 +126,7 @@ def _play_guessing(manager: PlayerManager) -> None:
         print("Saldo insuficiente para esa apuesta.")
         return
 
-    # Jugada de adivinanzas: elegir número del 1 al 5
+    # Generate number between 1 and 5
     secret = random.randint(1, 5)
     guess_str = input("Adivina el número (1-5): ").strip()
     try:
@@ -144,12 +140,12 @@ def _play_guessing(manager: PlayerManager) -> None:
         return
 
     if guess == secret:
-        # Premio: 4× la apuesta
+        # Win: 4x the bet
         reward = bet * 4
         new_balance = player.account_balance + reward
         result_str = (f"Adivinanzas: Apostó {bet}, adivinó {secret}, ganó {reward}, saldo {new_balance}")
     else:
-        # Pierde: quita apuesta
+        # Lost: Quit the bet
         new_balance = player.account_balance - bet
         result_str = (f"Adivinanzas: Apostó {bet}, falló (salió {secret}), perdió {bet}, saldo {new_balance}")
 

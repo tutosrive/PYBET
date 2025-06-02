@@ -8,38 +8,38 @@ def optimal_betting_path() -> None:
     and list of bet options.
     """
     while True:
-        print("\n--- Optimal Betting Path ---")
-        print("1. Compute optimal bets")
-        print("0. Back to main menu")
-        choice: str = input("Choose an action: ").strip()
+        print("\n--- Camino Óptimo de Apuestas ---")
+        print("1. Calcular apuestas óptimas")
+        print("0. Volver al menú principal")
+        choice: str = input("Seleccione una opción: ").strip()
 
         if choice == '1':
-            bal_str: str = input("Enter initial balance (integer): ").strip()
+            bal_str: str = input("Ingrese saldo inicial (entero): ").strip()
             try:
                 initial_balance: int = int(bal_str)
             except ValueError:
-                print("Invalid balance. Please enter an integer.")
+                print("Saldo inválido. Debe ser un número entero.")
                 continue
 
             opts_str: str = input(
-                "Enter bet options as comma-separated integers (e.g. 5,10,20): "
+                "Ingrese opciones de apuesta separadas por coma (ej. 5,10,20): "
             ).strip()
             try:
                 bet_options: List[int] = [
                     int(x.strip()) for x in opts_str.split(',') if x.strip()
                 ]
             except ValueError:
-                print("Invalid bet options. Ensure all are integers.")
+                print("Opciones inválidas. Asegúrese de ingresar números enteros separados por coma.")
                 continue
 
             solver = Backtracking(initial_balance, bet_options)
             best_seq, best_total = solver.findOptimalPath()
-            print(f"\nInitial balance: {initial_balance}")
-            print(f"Bet options: {bet_options}")
-            print(f"Optimal sequence of bets: {best_seq}")
-            print(f"Total amount used: {best_total}")
+            print(f"\nSaldo inicial: {initial_balance}")
+            print(f"Opciones de apuesta: {bet_options}")
+            print(f"Secuencia óptima de apuestas: {best_seq}")
+            print(f"Monto total apostado: {best_total}")
 
         elif choice == '0':
             break
         else:
-            print("Invalid option, try again.")
+            print("Opción inválida, intente de nuevo.")

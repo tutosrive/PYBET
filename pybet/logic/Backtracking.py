@@ -10,7 +10,7 @@ class Backtracking:
 
         Args:
             initialBalance (int): The total funds available.
-            betOptions (list[int]): list of distinct bet amounts.
+            betOptions (list[int]): List of distinct bet amounts.
         """
         self.initialBalance: int = initialBalance
         self.betOptions: list[int] = betOptions
