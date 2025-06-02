@@ -2,31 +2,44 @@
     "KAAMG2": {
         "id": "KAAMG2",
         "name": "Alice",
-        "account_balance": 1400,
+        "account_balance": 290.0,
         "created_at": "2025-06-02T17:17:57.157541",
         "history": [
             "Tragamonedas (Slots): Apostó 200, perdió 200, saldo 800",
-            "Adivinanzas: Apostó 150, eligió 2, ganó 600, saldo 1400"
+            "Adivinanzas: Apostó 150, eligió 2, ganó 600, saldo 1400",
+            "Tragamonedas: Apostó 10.0, ganó 10.0, saldo 1410.0",
+            "Adivinanzas: Apostó 20.0, falló (salió 4), perdió 20.0, saldo 1390.0",
+            "Tragamonedas: Apostó 1000.0, perdió 1000.0, saldo 390.0",
+            "Tragamonedas: Apostó 100.0, perdió 100.0, saldo 290.0",
+            "Tragamonedas: Apostó 100.0, perdió 100.0, saldo 190.0",
+            "Tragamonedas: Apostó 100.0, ganó 100.0, saldo 290.0"
         ]
     },
     "YPWKS6": {
         "id": "YPWKS6",
         "name": "Bob",
-        "account_balance": 1550,
+        "account_balance": 88.0,
         "created_at": "2025-06-02T17:17:57.167828",
         "history": [
             "Tragamonedas (Slots): Apostó 200, ganó 200, saldo 1700",
-            "Adivinanzas: Apostó 150, eligió 4, perdió 150 (salió 1), saldo 1550"
+            "Adivinanzas: Apostó 150, eligió 4, perdió 150 (salió 1), saldo 1550",
+            "Tragamonedas: Apostó 1000.0, perdió 1000.0, saldo 550.0",
+            "Tragamonedas: Apostó 200.0, perdió 200.0, saldo 350.0",
+            "Tragamonedas: Apostó 238.0, ganó 238.0, saldo 588.0",
+            "Adivinanzas: Apostó 100.0, falló (salió 1), perdió 100.0, saldo 488.0",
+            "Adivinanzas: Apostó 400.0, falló (salió 1), perdió 400.0, saldo 88.0"
         ]
     },
     "VTOYQL": {
         "id": "VTOYQL",
         "name": "Charlie",
-        "account_balance": 1250,
+        "account_balance": 1350.0,
         "created_at": "2025-06-02T17:17:57.174827",
         "history": [
             "Tragamonedas (Slots): Apostó 200, ganó 200, saldo 1400",
-            "Adivinanzas: Apostó 150, eligió 5, perdió 150 (salió 4), saldo 1250"
+            "Adivinanzas: Apostó 150, eligió 5, perdió 150 (salió 4), saldo 1250",
+            "Tragamonedas: Apostó 100.0, perdió 100.0, saldo 1150.0",
+            "Tragamonedas: Apostó 200.0, ganó 200.0, saldo 1350.0"
         ]
     }
 }

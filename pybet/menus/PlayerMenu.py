@@ -6,18 +6,18 @@ from pybet.models.OperationResult import OperationResult
 def manage_players() -> None:
     """
     Menu for managing player operations: list, add, update, delete.
-    Relies on PlayerManager, which uses a single players.json mapping.
+    Uses PlayerManager, which stores all players in players.json.
     """
     manager = PlayerManager()
 
     while True:
-        print("\n--- Manage Players ---")
-        print("1. List all players")
-        print("2. Add a new player")
-        print("3. Update a player")
-        print("4. Delete a player")
-        print("0. Back to main menu")
-        sub: str = input("Choose an action: ").strip()
+        print("\n--- Gestionar Jugadores ---")
+        print("1. Listar todos los jugadores")
+        print("2. Agregar nuevo jugador")
+        print("3. Actualizar jugador")
+        print("4. Eliminar jugador")
+        print("0. Volver al menú principal")
+        sub: str = input("Seleccione una opción: ").strip()
 
         if sub == '1':
             res: OperationResult = manager.get_all_players()
@@ -26,56 +26,56 @@ def manage_players() -> None:
             else:
                 players: list[Player] = res.data
                 if not players:
-                    print("No players found.")
+                    print("No hay jugadores.")
                 else:
-                    print("\nPlayers:")
+                    print("\nJugadores:")
                     for p in players:
-                        print(f"- ID: {p.id} | Name: {p.name} | Balance: {p.account_balance}")
+                        print(f"- ID: {p.id} | Nombre: {p.name} | Saldo: {p.account_balance}")
 
         elif sub == '2':
-            name: str = input("Enter full name: ").strip()
-            bal_str: str = input("Enter initial balance: ").strip()
+            name: str = input("Ingrese nombre completo: ").strip()
+            bal_str: str = input("Ingrese saldo inicial: ").strip()
             try:
                 balance: float = float(bal_str)
                 res: OperationResult = manager.add_player(name, balance)
                 if res.ok:
                     p: Player = res.data
-                    print(f"Player created: ID {p.id}, Name {p.name}, Balance {p.account_balance}")
+                    print(f"Jugador creado: ID {p.id}, Nombre {p.name}, Saldo {p.account_balance}")
                 else:
                     print("Error:", res.error)
             except ValueError:
-                print("Invalid balance.")
+                print("Saldo inválido. Debe ser un número.")
 
         elif sub == '3':
-            pid: str = input("Enter player ID to update: ").strip()
-            new_name: Optional[str] = input("New name (leave blank to keep current): ").strip()
+            pid: str = input("Ingrese ID de jugador a actualizar: ").strip()
+            new_name: Optional[str] = input("Nuevo nombre (dejar vacío para conservar): ").strip()
             if new_name == "":
                 new_name = None
-            new_bal_str: str = input("New balance (leave blank to keep current): ").strip()
+            new_bal_str: str = input("Nuevo saldo (dejar vacío para conservar): ").strip()
             new_balance: Optional[float] = None
             if new_bal_str:
                 try:
                     new_balance = float(new_bal_str)
                 except ValueError:
-                    print("Invalid balance. Aborting update.")
+                    print("Saldo inválido. Abortando actualización.")
                     continue
             res: OperationResult = manager.update_player(pid, new_name, new_balance)
             if res.ok:
                 p: Player = res.data
-                print(f"Updated player: ID {p.id}, Name {p.name}, Balance {p.account_balance}")
+                print(f"Jugador actualizado: ID {p.id}, Nombre {p.name}, Saldo {p.account_balance}")
             else:
                 print("Error:", res.error)
 
         elif sub == '4':
-            pid: str = input("Enter player ID to delete: ").strip()
+            pid: str = input("Ingrese ID de jugador a eliminar: ").strip()
             res: OperationResult = manager.delete_player(pid)
             if res.ok:
                 p: Player = res.data
-                print(f"Deleted player: ID {p.id}, Name {p.name}")
+                print(f"Jugador eliminado: ID {p.id}, Nombre {p.name}")
             else:
                 print("Error:", res.error)
 
         elif sub == '0':
             break
         else:
-            print("Invalid option, try again.")
+            print("Opción inválida, intente de nuevo.")

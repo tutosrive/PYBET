@@ -70,7 +70,7 @@ def _report_top_balances(manager: PlayerManager) -> None:
         json_data.append({"name": p.name, "balance": p.account_balance})
         csv_rows.append([p.name, str(p.account_balance)])
 
-    # Paths
+    # Paths for JSON and CSV files
     json_path = f"{REPORTS_DIR}/top_balances.json"
     csv_path = f"{REPORTS_DIR}/top_balances.csv"
 
@@ -82,7 +82,7 @@ def _report_top_balances(manager: PlayerManager) -> None:
     print(f"→ Guardado en {json_path} y {csv_path}")
 
 
-# Report 2: Earnings Ranking 
+# Report 2: Earnings Ranking
 def _report_earnings_ranking(manager: PlayerManager) -> None:
     """
     Similar to Top Balances but includes ranking position.
@@ -105,7 +105,7 @@ def _report_earnings_ranking(manager: PlayerManager) -> None:
         json_data.append({"rank": rank, "name": p.name, "balance": p.account_balance})
         csv_rows.append([str(rank), p.name, str(p.account_balance)])
 
-    # Paths
+    # Paths for JSON and CSV files
     json_path = f"{REPORTS_DIR}/earnings_ranking.json"
     csv_path = f"{REPORTS_DIR}/earnings_ranking.csv"
 
@@ -151,17 +151,16 @@ def _report_player_history(manager: PlayerManager) -> None:
 
     # JSON format: list of strings
     FileManager.write_file(json_path, actions, mode='w')
-
     # CSV format: single column "Action"
     FileManager.write_file_csv(csv_path, rows=[[a] for a in actions], header=["Action"], mode='w')
 
-    print(f"→ Historial exportado en {json_path} y {csv_path}")
+    print(f"→ Historico exportado en {json_path} y {csv_path}")
 
 
 # Report 4: Loss Counts
 def _report_loss_counts(manager: PlayerManager) -> None:
     """
-    Computes, for each player, how many times their history contains "lost"
+    Computes, for each player, how many times their history contains “perdió” or “perdio”
     (case-insensitive). Sorts descending by that count, displays and exports.
     """
     res: OperationResult = manager.get_all_players()
@@ -176,7 +175,8 @@ def _report_loss_counts(manager: PlayerManager) -> None:
         # Count occurrences of "lost" in their history
         count = 0
         for action in p.history:
-            if "lost" in action.lower():
+            low = action.lower()
+            if "perdió" in low or "perdio" in low:
                 count += 1
         loss_list.append({"name": p.name, "loss_count": count})
 
@@ -197,16 +197,15 @@ def _report_loss_counts(manager: PlayerManager) -> None:
     csv_rows: List[List[str]] = []
     for rank, entry in enumerate(sorted_losses, 1):
         csv_rows.append([str(rank), entry["name"], str(entry["loss_count"])])
-
     FileManager.write_file_csv(csv_path, rows=csv_rows, header=["Rank", "Name", "LossCount"], mode='w')
 
     print(f"→ Guardado en {json_path} y {csv_path}")
 
 
-# Report 5: Game Participation 
+# Report 5: Game Participation
 def _report_game_participation(manager: PlayerManager) -> None:
     """
-    Counts how many times "Tragamonedas" vs "Adivinanzas" appear across all players' histories.
+    Counts how many times “Tragamonedas” vs “Adivinanzas” appear across all players' histories.
     Displays and exports the totals.
     """
     res: OperationResult = manager.get_all_players()

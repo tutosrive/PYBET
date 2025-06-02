@@ -5,18 +5,18 @@ from chromologger import Logger as Log
 from chromolog import Print
 from pybet.models.OperationResult import OperationResult
 
-# Logger to save errors and info
+# Logger to save errors and information
 log: Log = Log('./pybet/logs/log.log')
-# To print messages to console
+# Printer to show colored messages on console
 printer: Print = Print()
 
 class FileManager:
-    """Manage files: read, write and more, returning OperationResult."""
+    """Manage files (plain text, JSON, CSV), returning OperationResult."""
 
     @staticmethod
     def read_file_plain(filename: str) -> OperationResult:
         """
-        Reads a plain text file.
+        Reads a plain text file and returns its content.
 
         Args:
             filename (str): Path to the file.
@@ -42,7 +42,7 @@ class FileManager:
     @staticmethod
     def write_file(file_name: str, content: any = None, mode: str = 'w') -> OperationResult:
         """
-        Writes content to a file (plain or JSON).
+        Writes content to a file. If .json extension, serializes as JSON; otherwise writes plain text.
 
         Args:
             file_name (str): Path to the file.
@@ -59,7 +59,7 @@ class FileManager:
 
         is_json = Path(file_name).suffix == '.json'
         try:
-            # Asegura que exista el directorio
+            # Ensure directory exists
             Path(file_name).parent.mkdir(parents=True, exist_ok=True)
             with open(file_name, mode, encoding='utf-8') as f:
                 if is_json:
@@ -75,7 +75,7 @@ class FileManager:
     @staticmethod
     def read_file_csv(csv_filename: str) -> OperationResult:
         """
-        Reads a CSV file, skipping header.
+        Reads a CSV file (skipping optional header) and returns rows as List[List[str]].
 
         Args:
             csv_filename (str): Path to CSV.
@@ -87,7 +87,7 @@ class FileManager:
         try:
             with open(csv_filename, 'r', encoding='utf-8') as f:
                 reader_csv = csv.reader(f)
-                next(reader_csv, None)  # saltar encabezado si existe
+                next(reader_csv, None)  # Skip header if present
                 rows = list(reader_csv)
             if rows:
                 result.ok = True
@@ -103,10 +103,10 @@ class FileManager:
     @staticmethod
     def write_file_csv(file_name: str, rows: list[list[str]], header: list[str] | None = None, mode: str = 'w') -> OperationResult:
         """
-        Writes a list of rows (and optional header) to a CSV file.
+        Writes a list of rows (optionally with header) to a CSV file.
         """
         result = OperationResult(ok=False)
-        if mode not in ('w','a'):
+        if mode not in ('w', 'a'):
             FileManager.__save_data_error(result, f'Invalid CSV mode "{mode}"')
             return result
         try:
@@ -125,7 +125,7 @@ class FileManager:
     @staticmethod
     def read_file_json(json_filename: str) -> OperationResult:
         """
-        Reads a JSON file into a Python object.
+        Reads a JSON file and returns the parsed object (dict or list).
 
         Args:
             json_filename (str): Path to JSON.
@@ -137,7 +137,7 @@ class FileManager:
         try:
             with open(json_filename, 'r', encoding='utf-8') as f:
                 data = json.load(f)
-            # If data is empty list or empty dict, warn but still return ok with empty data
+            # If data is empty list or dict, warn but still return ok with empty data
             if (isinstance(data, list) and not data) or (isinstance(data, dict) and not data):
                 printer.warn(f'The JSON file "{json_filename}" is empty')
             result.ok = True
@@ -149,9 +149,7 @@ class FileManager:
 
     @staticmethod
     def print_exception_message() -> None:
-        """
-        Prints a generic error message to console.
-        """
+        """Prints a generic error message to console."""
         printer.err('[Error] An exception occurred, please try again.')
 
     @staticmethod

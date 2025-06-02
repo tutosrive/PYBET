@@ -4,7 +4,6 @@ from pybet.models.OperationResult import OperationResult
 from pybet.models.DataPersistence import DataPersistence
 from pybet.helpers.Helpers import Helpers
 
-
 class PlayerManager:
     """
     Manages CRUD operations for Player entities, storing all players in a single
@@ -21,9 +20,11 @@ class PlayerManager:
 
     def __init__(self) -> None:
         """
-        Initializes the PlayerManager. No parameters required.
+        Initializes the PlayerManager. No state is stored in the instance;
+        each method always reloads from DataPersistence.
         """
-        pass  # No state needed; each method loads/saves from DataPersistence.
+        # No state needed; each method loads/saves from DataPersistence.
+        pass
 
     def add_player(self, name: str, balance: float) -> OperationResult:
         """
@@ -40,13 +41,13 @@ class PlayerManager:
                 error (str): Error message otherwise.
         """
         # 1. Load existing mapping
-        map_res = DataPersistence.load_players_map()
+        map_res: OperationResult = DataPersistence.load_players_map()
         if not map_res.ok:
             return map_res
 
         players_map: Dict[str, Any] = map_res.data
 
-        # 2. Check duplicate name
+        # 2. Check duplicate name (case-insensitive)
         for p_dict in players_map.values():
             if p_dict.get("name", "").lower() == name.lower():
                 return OperationResult(ok=False, error=f"Player '{name}' already exists.")
@@ -69,7 +70,7 @@ class PlayerManager:
 
         # 5. Insert into map and persist
         players_map[new_id] = new_player.to_dict()
-        save_res = DataPersistence.save_players_map(players_map)
+        save_res: OperationResult = DataPersistence.save_players_map(players_map)
         if not save_res.ok:
             return save_res
 
@@ -89,7 +90,7 @@ class PlayerManager:
 
     def get_player_by_name(self, name: str) -> OperationResult:
         """
-        Finds a player by their full name (case-insensitive).
+        Finds a player by full name (case-insensitive) via linear search.
 
         Args:
             name (str): Full name to search for.
@@ -97,9 +98,9 @@ class PlayerManager:
         Returns:
             OperationResult:
                 ok (bool): True and data=Player if found.
-                        False and error message otherwise.
+                error (str): Message otherwise.
         """
-        all_res = self.get_all_players()
+        all_res: OperationResult = self.get_all_players()
         if not all_res.ok:
             return all_res
 
@@ -112,7 +113,7 @@ class PlayerManager:
 
     def get_player_by_id(self, player_id: str) -> OperationResult:
         """
-        Finds a player by their ID using binary search over the sorted list of IDs.
+        Finds a player by ID using binary search over the sorted list of IDs.
 
         Args:
             player_id (str): The unique ID to look up.
@@ -120,9 +121,9 @@ class PlayerManager:
         Returns:
             OperationResult:
                 ok (bool): True and data=Player if found.
-                        False and error message otherwise.
+                error (str): Message otherwise.
         """
-        all_res = self.get_all_players()
+        all_res: OperationResult = self.get_all_players()
         if not all_res.ok:
             return all_res
 
@@ -142,7 +143,10 @@ class PlayerManager:
 
         return OperationResult(ok=False, error=f"Player ID '{player_id}' not found.")
 
-    def update_player(self, player_id: str, new_name: Optional[str] = None, new_balance: Optional[float] = None) -> OperationResult:
+    def update_player(self,
+                    player_id: str,
+                    new_name: Optional[str] = None,
+                    new_balance: Optional[float] = None) -> OperationResult:
         """
         Updates an existing player's name and/or account balance.
 
@@ -154,10 +158,10 @@ class PlayerManager:
         Returns:
             OperationResult:
                 ok (bool): True and data=updated Player on success.
-                        False and error message otherwise.
+                error (str): Message otherwise.
         """
         # 1. Load mapping
-        map_res = DataPersistence.load_players_map()
+        map_res: OperationResult = DataPersistence.load_players_map()
         if not map_res.ok:
             return map_res
 
@@ -166,7 +170,7 @@ class PlayerManager:
             return OperationResult(ok=False, error="Player not found.")
 
         # 2. Update fields
-        record = players_map[player_id]
+        record: Dict[str, Any] = players_map[player_id]
         if new_name:
             record["name"] = new_name
         if new_balance is not None:
@@ -174,9 +178,9 @@ class PlayerManager:
                 return OperationResult(ok=False, error="Balance cannot be negative.")
             record["account_balance"] = new_balance
 
-        # 3. Persist
+        # 3. Persist changes
         players_map[player_id] = record
-        save_res = DataPersistence.save_players_map(players_map)
+        save_res: OperationResult = DataPersistence.save_players_map(players_map)
         if not save_res.ok:
             return save_res
 
@@ -190,14 +194,13 @@ class PlayerManager:
 
         Args:
             player_id (str): Unique ID of the player to delete.
-
         Returns:
             OperationResult:
                 ok (bool): True and data=deleted Player on success.
-                        False and error message otherwise.
+                error (str): Message otherwise.
         """
         # 1. Load mapping
-        map_res = DataPersistence.load_players_map()
+        map_res: OperationResult = DataPersistence.load_players_map()
         if not map_res.ok:
             return map_res
 
@@ -206,11 +209,11 @@ class PlayerManager:
             return OperationResult(ok=False, error="Player not found.")
 
         # 2. Pop record
-        record = players_map.pop(player_id)
+        record: Dict[str, Any] = players_map.pop(player_id)
         deleted_player = Player.from_dict(record)
 
-        # 3. Persist
-        save_res = DataPersistence.save_players_map(players_map)
+        # 3. Persist changes
+        save_res: OperationResult = DataPersistence.save_players_map(players_map)
         if not save_res.ok:
             return save_res
 
