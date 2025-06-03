@@ -34,13 +34,15 @@ from pybet.models.PlayerManager import PlayerManager
 from pybet.models.OperationResult import OperationResult
 from pybet.logic.PlayerHistory import PlayerHistory
 
-console = Console()
+# Add this import to enable earning history tracking
+from pybet.helpers.EarningsTracker import EarningsTracker
 
+console = Console()
 
 def tail_recursive_optimal(low: int, high: int, attempts: int = 0) -> int:
     """
     Tail‐recursive helper to compute the minimum number of worst‐case guesses needed
-    to find any secret in the interval [low..high], assuming an optimal “binary‐search colored” strategy.
+    to find any secret in the interval [low..high], assuming an optimal binary-search strategy.
 
     Returns:
         int: Minimum worst‐case number of attempts.
@@ -158,7 +160,6 @@ def play_guessing(manager: PlayerManager) -> None:
             won = True
             break
         else:
-            # Not correct. Provide a hint, unless it was the last attempt.
             if guess < secret:
                 console.print("[yellow]Más alto.[/yellow]")
             else:
@@ -166,7 +167,8 @@ def play_guessing(manager: PlayerManager) -> None:
 
     # If did not win after all attempts → lose bet
     if not won:
-        new_balance = player.account_balance - bet
+        reward = -bet
+        new_balance = player.account_balance + reward
         console.print(f"[bold red]Lo siento, no lo adivinaste. Perdiste {bet:.2f}. El número era {secret}.[/bold red]")
 
     # Build a descriptive history entry
@@ -189,6 +191,8 @@ def play_guessing(manager: PlayerManager) -> None:
     if not push_res.ok:
         console.print(f"[red]Error al registrar historial:[/] {push_res.error}")
 
-    # Display final line for clarity
+    # to update earnings history
+    EarningsTracker.update_earnings(player_id, reward)
+
     console.print("\n[bold cyan]Resultado Adivinanzas:[/bold cyan]")
     console.print(f"{result_str}")

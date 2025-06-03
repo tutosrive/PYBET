@@ -29,6 +29,9 @@ from pybet.models.PlayerManager import PlayerManager
 from pybet.models.OperationResult import OperationResult
 from pybet.logic.PlayerHistory import PlayerHistory
 
+# Import EarningsTracker to update earnings history
+from pybet.helpers.EarningsTracker import EarningsTracker
+
 # Define the possible symbols for each reel
 REEL_SYMBOLS: List[str] = ["🍒", "🍋", "🔔", "⭐", "7️⃣"]
 
@@ -58,6 +61,7 @@ def play_slot(manager: PlayerManager) -> None:
         6. Update the player’s balance via PlayerManager.
         7. Record a descriptive string in PlayerHistory.
         8. Display spin result and updated balance.
+        9. Update the player's earnings history in a JSON file.
 
     Args:
         manager (PlayerManager): Instance to load/update players.json.
@@ -120,6 +124,9 @@ def play_slot(manager: PlayerManager) -> None:
     push_res: OperationResult = hist.push(result_str)
     if not push_res.ok:
         print("Error al registrar historial:", push_res.error)
+
+    # Update the player's earnings history
+    EarningsTracker.update_earnings(player_id, reward)
 
     # Display result to user
     print("\nResultado Tragamonedas:")

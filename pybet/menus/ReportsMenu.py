@@ -10,6 +10,8 @@ from pybet.models.OperationResult import OperationResult
 from pybet.logic.PlayerHistory import PlayerHistory
 from pybet.models.Player import Player
 from pybet.helpers.FileManager import FileManager
+# Import EarningsTracker for earnings report
+from pybet.helpers.EarningsTracker import EarningsTracker
 
 console = Console()
 DATA_FILE: str = './pybet/data/players.json'
@@ -93,37 +95,46 @@ def _report_top_balances(manager: PlayerManager) -> None:
 # Report 2: Earnings Ranking
 def _report_earnings_ranking(manager: PlayerManager) -> None:
     """
-    Similar to Top Balances pero incluye ranking numérico.
-    Muestra tabla y exporta a JSON+CSV.
+    Shows player earnings ranking based on net earnings history stored in JSON file.
+    Displays a table and exports to JSON and CSV.
     """
+    # Load net earnings for all players using EarningsTracker
+    earnings = EarningsTracker.get_all_earnings()
+    if not earnings:
+        console.print("[yellow]No hay datos de ganancias aún.[/yellow]")
+        return
+    # Load all players for name resolution
     res = manager.get_all_players()
     if not res.ok:
         console.print(f"[red]Error cargando jugadores:[/red] {res.error}")
         return
-
     players = res.data
-    # Sort descending by balance
-    sorted_players = sorted(players, key=lambda p: p.account_balance, reverse=True)
+    # Build a mapping: player_id → name
+    id_to_name = {p.id: p.name for p in players}
 
-    table = Table(title="Ranking de Ganancias")
+    # Sort by total earned (descending)
+    sorted_earnings = sorted(earnings.items(), key=lambda item: item[1], reverse=True)
+
+    table = Table(title="Ranking de Ganancias Netas (Historial)")
     table.add_column("Posición", style="cyan", justify="right")
     table.add_column("Nombre", style="magenta")
-    table.add_column("Saldo", style="green", justify="right")
+    table.add_column("ID", style="magenta")
+    table.add_column("Ganancia Neta", style="green", justify="right")
 
     json_data = []
     csv_rows: List[List[str]] = []
-    for rank, p in enumerate(sorted_players, 1):
-        table.add_row(str(rank), p.name, f"{p.account_balance:.2f}")
-        json_data.append({"rank": rank, "name": p.name, "balance": p.account_balance})
-        csv_rows.append([str(rank), p.name, f"{p.account_balance:.2f}"])
+    for rank, (pid, total) in enumerate(sorted_earnings, 1):
+        name = id_to_name.get(pid, "<desconocido>")
+        table.add_row(str(rank), name, pid, f"{total:.2f}")
+        json_data.append({"rank": rank, "name": name, "player_id": pid, "net_earnings": total})
+        csv_rows.append([str(rank), name, pid, f"{total:.2f}"])
 
     console.print(table)
 
-    # Paths for JSON and CSV files
     json_path = f"{REPORTS_DIR}/earnings_ranking.json"
     csv_path = f"{REPORTS_DIR}/earnings_ranking.csv"
     FileManager.write_file(json_path, json_data, mode='w')
-    FileManager.write_file_csv(csv_path, rows=csv_rows, header=["Rank","Name","Balance"], mode='w')
+    FileManager.write_file_csv(csv_path, rows=csv_rows, header=["Rank","Name","PlayerID","NetEarnings"], mode='w')
     console.print(f"[green]→ Guardado en[/green] [bold]{json_path}[/bold] [green]y[/green] [bold]{csv_path}[/bold]")
 
 
