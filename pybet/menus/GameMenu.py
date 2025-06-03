@@ -1,6 +1,11 @@
+from rich.console import Console
+from rich.text import Text
+
 from pybet.models.PlayerManager import PlayerManager
 from pybet.games.slot_game import play_slot
 from pybet.games.guessing_game import play_guessing
+
+console = Console()
 
 def play_games() -> None:
     """
@@ -15,11 +20,11 @@ def play_games() -> None:
     manager = PlayerManager()
 
     while True:
-        print("\n--- Jugar ---")
-        print("1. Tragamonedas")
-        print("2. Adivinanzas")
-        print("0. Volver al menú principal")
-        choice: str = input("Seleccione un juego: ").strip()
+        console.print("\n[bold cyan]--- Jugar ---[/bold cyan]")
+        console.print("1. Tragamonedas")
+        console.print("2. Adivinanzas")
+        console.print("0. Volver al menú principal")
+        choice: str = console.input("[yellow]Seleccione un juego:[/yellow] ").strip()
 
         if choice == '1':
             play_slot(manager)
@@ -28,4 +33,4 @@ def play_games() -> None:
         elif choice == '0':
             break
         else:
-            print("Opción inválida, intente de nuevo.")
+            console.print("[red]Opción inválida, intente de nuevo.[/red]")

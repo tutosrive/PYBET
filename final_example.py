@@ -1,12 +1,12 @@
 """
 Example script to demonstrate that the PYBET casino system is fully functional,
 covering all features specified in the project PDF. This includes:
-  - Player CRUD (add, list, update, delete)
-  - Player-specific history (push/pop)
-  - Queue management (enqueue, dequeue, show)
-  - Backtracking optimal betting path
-  - Two games: "Tragamonedas" and "Adivinanzas"
-  - Report generation (5 distinct reports)
+    - Player CRUD (add, list, update, delete)
+    - Player-specific history (push/pop)
+    - Queue management (enqueue, dequeue, show)
+    - Backtracking optimal betting path
+    - Two games: "Tragamonedas" and "Adivinanzas"
+    - Report generation (5 distinct reports)
 All operations are executed programmatically, and outputs are printed to console.
 """
 
@@ -14,6 +14,10 @@ import os
 import random
 import csv
 from pathlib import Path
+
+from rich.console import Console
+from rich.table import Table
+from rich.text import Text
 
 from pybet.models.PlayerManager import PlayerManager
 from pybet.models.OperationResult import OperationResult
@@ -28,6 +32,8 @@ from pybet.menus.ReportsMenu import (
     _report_loss_counts,
     _report_game_participation,
 )
+
+console = Console()
 
 # 1. SET UP DIRECTORIES & CLEAN OLD DATA
 BASE_DIR = Path(__file__).parent
@@ -45,10 +51,10 @@ queue_file = DATA_DIR / "queue.json"
 for fpath, initial in [(players_file, "{}"), (queue_file, "[]")]:
     fpath.write_text(initial, encoding="utf-8")
 
-print("✅ Data directories and files initialized.\n")
+console.print("[bold green]✅ Data directories and files initialized.[/bold green]\n")
 
 # 2. DEMONSTRATE PLAYER CRUD
-print("=== Player CRUD Operations ===")
+console.print("[bold cyan]=== Player CRUD Operations ===[/bold cyan]")
 manager = PlayerManager()
 
 # 2.1 Add 3 players
@@ -58,53 +64,67 @@ for name, balance in [("Alice", 1000.0), ("Bob", 1500.0), ("Charlie", 1200.0)]:
     if res.ok:
         player = res.data
         player_ids.append(player.id)
-        print(f"Created Player: {player.name} (ID: {player.id}, Balance: {player.account_balance})")
+        console.print(f"[green]✔ Created Player:[/green] [bold]{player.name}[/bold] (ID: [cyan]{player.id}[/cyan], Balance: [green]{player.account_balance:.2f}[/green])")
     else:
-        print(f"Error adding {name}: {res.error}")
-print()
+        console.print(f"[red]Error adding {name}:[/red] {res.error}")
+console.print()
 
 # 2.2 List all players
 res_all = manager.get_all_players()
 if res_all.ok:
-    print("List of all players after creation:")
+    console.print("[bold magenta]List of all players after creation:[/bold magenta]")
+    table = Table(title="Players")
+    table.add_column("ID", style="cyan", no_wrap=True)
+    table.add_column("Name", style="magenta")
+    table.add_column("Balance", style="green", justify="right")
+
     for p in res_all.data:
-        print(f"  - {p.name} (ID: {p.id}, Balance: {p.account_balance})")
+        table.add_row(p.id, p.name, f"{p.account_balance:.2f}")
+
+    console.print(table)
 else:
-    print("Error listing players:", res_all.error)
-print()
+    console.print(f"[red]Error listing players:[/red] {res_all.error}")
+console.print()
 
 # 2.3 Update Bob's balance and name
 bob_id = player_ids[1]
 res_update = manager.update_player(bob_id, new_name="Bobby", new_balance=1800.0)
 if res_update.ok:
     updated = res_update.data
-    print(f"Updated Player: {updated.name} (ID: {updated.id}, Balance: {updated.account_balance})")
+    console.print(f"[green]✔ Updated Player:[/green] [bold]{updated.name}[/bold] (ID: [cyan]{updated.id}[/cyan], Balance: [green]{updated.account_balance:.2f}[/green])")
 else:
-    print("Error updating player:", res_update.error)
-print()
+    console.print(f"[red]Error updating player:[/red] {res_update.error}")
+console.print()
 
 # 2.4 Delete Charlie
 charlie_id = player_ids[2]
 res_delete = manager.delete_player(charlie_id)
 if res_delete.ok:
     deleted = res_delete.data
-    print(f"Deleted Player: {deleted.name} (ID: {deleted.id})")
+    console.print(f"[green]✔ Deleted Player:[/green] [bold]{deleted.name}[/bold] (ID: [cyan]{deleted.id}[/cyan])")
 else:
-    print("Error deleting player:", res_delete.error)
-print()
+    console.print(f"[red]Error deleting player:[/red] {res_delete.error}")
+console.print()
 
 # 2.5 Final list
 res_final = manager.get_all_players()
 if res_final.ok:
-    print("Final list of players:")
+    console.print("[bold magenta]Final list of players:[/bold magenta]")
+    table2 = Table(title="Players After Deletion")
+    table2.add_column("ID", style="cyan", no_wrap=True)
+    table2.add_column("Name", style="magenta")
+    table2.add_column("Balance", style="green", justify="right")
+
     for p in res_final.data:
-        print(f"  - {p.name} (ID: {p.id}, Balance: {p.account_balance})")
+        table2.add_row(p.id, p.name, f"{p.account_balance:.2f}")
+
+    console.print(table2)
 else:
-    print("Error listing players:", res_final.error)
-print("\n")
+    console.print(f"[red]Error listing players:[/red] {res_final.error}")
+console.print("\n")
 
 # 3. DEMONSTRATE PLAYER HISTORY (push/pop)
-print("=== Player History ===")
+console.print("[bold cyan]=== Player History ===[/bold cyan]")
 alice_id = player_ids[0]
 hist = PlayerHistory(alice_id)
 
@@ -115,120 +135,144 @@ for action in [
     "Alice: Bet $200 on Tragamonedas"
 ]:
     psh_res = hist.push(action)
-    print(f"Pushed action -> '{action}': {'OK' if psh_res.ok else psh_res.error}")
+    status = "[green]OK[/green]" if psh_res.ok else f"[red]{psh_res.error}[/red]"
+    console.print(f"Pushed action -> '{action}': {status}")
 
 # 3.2 Get all
 get_hist = hist.get_all()
-print("\nAlice's history after pushes:")
+console.print("\n[magenta]Alice's history after pushes:[/magenta]")
 if get_hist.ok and get_hist.data:
+    table3 = Table(title="Alice's History")
+    table3.add_column("Index", style="cyan", justify="right")
+    table3.add_column("Action", style="magenta")
     for idx, act in enumerate(get_hist.data, 1):
-        print(f"  {idx}. {act}")
+        table3.add_row(str(idx), act)
+    console.print(table3)
 else:
-    print("  (No history or error)")
+    console.print("[italic]  (No history or error)[/italic]")
 
 # 3.3 Pop last
 pop_res = hist.pop()
-print(f"\nPopped action: {pop_res.data if pop_res.ok else pop_res.error}")
+if pop_res.ok:
+    console.print(f"\n[green]Popped action:[/green] {pop_res.data}")
+else:
+    console.print(f"\n[red]Error popping history:[/red] {pop_res.error}")
 
 # 3.4 Final history
 final_hist = hist.get_all()
-print("Alice's history after pop:")
+console.print("[magenta]Alice's history after pop:[/magenta]")
 if final_hist.ok and final_hist.data:
+    table4 = Table(title="Alice's History (After Pop)")
+    table4.add_column("Index", style="cyan", justify="right")
+    table4.add_column("Action", style="magenta")
     for idx, act in enumerate(final_hist.data, 1):
-        print(f"  {idx}. {act}")
+        table4.add_row(str(idx), act)
+    console.print(table4)
 else:
-    print("  (No history or error)")
-print("\n")
+    console.print("[italic]  (No history or error)[/italic]")
+console.print("\n")
 
 # 4. DEMONSTRATE QUEUE (enqueue, dequeue, show)
-print("=== Waiting Queue ===")
+console.print("[bold cyan]=== Waiting Queue ===[/bold cyan]")
 queue = WaitingQueue()
 
 # 4.1 Enqueue players
-print("Enqueuing players A, B, Alice:")
+console.print("[yellow]Enqueuing players A, B, Alice:[/yellow]")
 queue.enqueue("A")
 queue.enqueue("B")
 queue.enqueue(alice_id)
-print("Current queue:", queue.get_all())
+
+# Display queue
+current_queue = queue.get_all()
+table_q = Table(title="Current Queue")
+table_q.add_column("Position", style="cyan", justify="right")
+table_q.add_column("Player ID", style="magenta")
+for idx, pid in enumerate(current_queue, 1):
+    table_q.add_row(str(idx), pid)
+console.print(table_q)
 
 # 4.2 Peek
 peek_res = queue.peek()
-print("Peek front:", peek_res.data if peek_res.ok else peek_res.error)
+console.print(f"[yellow]Peek front:[/yellow] {peek_res.data if peek_res.ok else peek_res.error}")
 
 # 4.3 Dequeue twice
 for _ in range(2):
     dq_res = queue.dequeue()
-    print("Dequeued:", dq_res.data if dq_res.ok else dq_res.error)
-print("Queue after 2 dequeues:", queue.get_all())
+    console.print(f"[yellow]Dequeued:[/yellow] {dq_res.data if dq_res.ok else dq_res.error}")
+
+# Display queue after dequeues
+remaining = queue.get_all()
+table_q2 = Table(title="Queue After 2 Dequeues")
+table_q2.add_column("Position", style="cyan", justify="right")
+table_q2.add_column("Player ID", style="magenta")
+for idx, pid in enumerate(remaining, 1):
+    table_q2.add_row(str(idx), pid)
+console.print(table_q2)
 
 # 4.4 Clear queue
 clr_res = queue.clear()
-print("Cleared queue. Now:", queue.get_all())
-print("\n")
+console.print(f"[yellow]Cleared queue. Now:[/yellow] {queue.get_all()}")
+console.print("\n")
 
 # 5. BACKTRACKING (optimal betting path)
-print("=== Optimal Betting Path (Backtracking) ===")
+console.print("[bold cyan]=== Optimal Betting Path (Backtracking) ===[/bold cyan]")
 initial_balance = 100
 bet_options = [5, 10, 20, 50]
 solver = Backtracking(initial_balance, bet_options)
 best_seq, best_total = solver.findOptimalPath()
-print(f"Initial balance: {initial_balance}")
-print(f"Bet options: {bet_options}")
-print(f"Optimal sequence: {best_seq} (total = {best_total})\n")
+
+table_bt = Table(title="Optimal Betting Path")
+table_bt.add_column("Initial Balance", style="cyan", justify="right")
+table_bt.add_column("Bet Options", style="magenta")
+table_bt.add_column("Best Sequence", style="green")
+table_bt.add_column("Total Used", style="yellow", justify="right")
+
+table_bt.add_row(str(initial_balance), str(bet_options), str(best_seq), str(best_total))
+console.print(table_bt)
+console.print("\n")
 
 # 6. PLAY GAMES
 from pybet.games.slot_game import play_slot
 from pybet.games.guessing_game import play_guessing
 
-print("=== Gameplay Simulation ===")
+console.print("[bold cyan]=== Gameplay Simulation ===[/bold cyan]")
 # 6.1 Play Tragamonedas for Alice
-print("\n-- Tragamonedas Play --")
-# Note: In this script, we simulate interactive calls by patching input(). 
-# For simplicity, we directly call the game functions and simulate input by printing instructions.
-# In a true non-interactive script, you might refactor game functions to accept parameters
-# rather than reading input() directly. Here we demonstrate by manual guidance.
-
-print(f"(Manual Test) To test 'play_slot(manager)', please run: play_slot(manager) and follow prompts.\n")
+console.print("\n[magenta]-- Tragamonedas Play --[/magenta]")
+console.print(f"[italic]Manual Test:[/] Run [bold]play_slot(manager)[/bold] and follow prompts.")
 
 # 6.2 Play Adivinanzas for Bob (Bobby)
-print("\n-- Adivinanzas Play --")
-print(f"(Manual Test) To test 'play_guessing(manager)', please run: play_guessing(manager) and follow prompts.\n")
-
-# *Because slot_game.play_slot() and guessing_game.play_guessing() expect user input,
-#  we demonstrate here by explaining how to invoke them. For automated tests,
-#  you would refactor them to accept parameters.*
-
+console.print("\n[magenta]-- Adivinanzas Play --[/magenta]")
+console.print(f"[italic]Manual Test:[/] Run [bold]play_guessing(manager)[/bold] and follow prompts.")
+console.print("\n")
 
 # 7. GENERATE REPORTS
-# We will programmatically invoke each report function.
-print("=== Generating Reports ===")
+console.print("[bold cyan]=== Generating Reports ===[/bold cyan]")
+
 # 7.1 Top Balances
-print("\n-- Top Balances Report --")
+console.print("\n[magenta]-- Top Balances Report --[/magenta]")
 _report_top_balances(manager)
 
 # 7.2 Earnings Ranking
-print("\n-- Earnings Ranking Report --")
+console.print("\n[magenta]-- Earnings Ranking Report --[/magenta]")
 _report_earnings_ranking(manager)
 
 # 7.3 Player History Report for Alice
-print("\n-- Player History Report (Alice) --")
-# For report functions expecting input(), we simulate by printing instructions:
-print(f"(Manual Test) Run _report_player_history(manager) and enter: {alice_id} when prompted.\n")
+console.print("\n[magenta]-- Player History Report (Alice) --[/magenta]")
+console.print(f"[italic]Manual Test:[/] Run [bold]_report_player_history(manager)[/bold] and enter: [cyan]{alice_id}[/cyan] when prompted.")
+console.print("\n")
 
 # 7.4 Loss Counts
-print("\n-- Loss Counts Report --")
+console.print("[magenta]-- Loss Counts Report --[/magenta]")
 _report_loss_counts(manager)
 
 # 7.5 Game Participation
-print("\n-- Game Participation Report --")
+console.print("\n[magenta]-- Game Participation Report --[/magenta]")
 _report_game_participation(manager)
 
-print("\nAll reports generated in directory:", REPORTS_DIR)
-print("\n")
+console.print(f"\n[green]All reports generated in directory:[/] [bold]{REPORTS_DIR}[/bold]\n")
 
 # 8. EXPORT PLAYER HISTORY TO FILES (JSON & CSV) FOR Alice
-print("=== Exporting Alice's History Manually ===")
-# 8.1 Get Alice's history
+console.print("[bold cyan]=== Exporting Alice's History Manually ===[/bold cyan]")
 alice_history = PlayerHistory(alice_id).get_all()
 if alice_history.ok:
     actions = alice_history.data or []
@@ -243,10 +287,10 @@ if alice_history.ok:
             writer.writerow(["Action"])
             for entry in actions:
                 writer.writerow([entry])
-        print(f"Alice's history exported → {json_path}, {csv_path}")
+        console.print(f"[green]Alice's history exported →[/green] [bold]{json_path}[/bold], [bold]{csv_path}[/bold]")
     else:
-        print("No history for Alice to export.")
+        console.print("[italic]No history for Alice to export.[/italic]")
 else:
-    print("Error fetching Alice's history:", alice_history.error)
+    console.print(f"[red]Error fetching Alice's history:[/red] {alice_history.error}")
 
-print("\n✅ Example script completed. Please verify outputs above and check data/reports/ for generated files.")
+console.print("\n[bold green]✅ Example script completed. Please verify outputs above and check data/reports/ for generated files.[/bold green]")
