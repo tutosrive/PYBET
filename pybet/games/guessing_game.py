@@ -27,9 +27,14 @@ Docstring tags:
 import random
 from typing import Optional, Tuple
 
+from rich.console import Console
+from rich.text import Text
+
 from pybet.models.PlayerManager import PlayerManager
 from pybet.models.OperationResult import OperationResult
 from pybet.logic.PlayerHistory import PlayerHistory
+
+console = Console()
 
 
 def tail_recursive_optimal(low: int, high: int, attempts: int = 0) -> int:
@@ -86,61 +91,62 @@ def play_guessing(manager: PlayerManager) -> None:
     Args:
         manager (PlayerManager): Instance to load/update players.json.
     """
-    player_id = input("ID de jugador: ").strip()
+    console.print("[bold cyan]=== Adivinanzas (Guessing Game) ===[/bold cyan]")
+    player_id = console.input("[yellow]ID de jugador:[/yellow] ").strip()
     get_res: OperationResult = manager.get_player_by_id(player_id)
     if not get_res.ok:
-        print("Error:", get_res.error)
+        console.print(f"[red]Error:[/] {get_res.error}")
         return
 
     player = get_res.data  # type: ignore  # Player instance
 
-    bet_str = input("Monto a apostar: ").strip()
+    bet_str = console.input("[yellow]Monto a apostar:[/yellow] ").strip()
     try:
         bet: float = float(bet_str)
     except ValueError:
-        print("Apuesta inválida. Debe ser un número.")
+        console.print("[red]Apuesta inválida. Debe ser un número.[/red]")
         return
 
     if bet <= 0:
-        print("La apuesta debe ser mayor que cero.")
+        console.print("[red]La apuesta debe ser mayor que cero.[/red]")
         return
 
     if bet > player.account_balance:
-        print("Saldo insuficiente para esa apuesta.")
+        console.print("[red]Saldo insuficiente para esa apuesta.[/red]")
         return
 
-    # —— Determine the numeric range for guessing ——
-    n_str = input("¿Hasta qué número quieres jugar? (Ingrese entero ≥ 2): ").strip()
+    # —— Determine the numeric range for guessing —— 
+    n_str = console.input("[yellow]¿Hasta qué número quieres jugar? (Ingrese entero ≥ 2):[/yellow] ").strip()
     try:
         N: int = int(n_str)
     except ValueError:
-        print("Número inválido. Debe ser un entero.")
+        console.print("[red]Número inválido. Debe ser un entero.[/red]")
         return
 
     if N < 2:
-        print("El número debe ser al menos 2.")
+        console.print("[red]El número debe ser al menos 2.[/red]")
         return
 
     # Compute, via tail recursion, the minimum worst‐case attempts
     optimal_attempts = tail_recursive_optimal(1, N, 0)
-    print(f"En el peor de los casos, necesitas {optimal_attempts} intentos para adivinar un número entre 1 y {N}.")
+    console.print(f"[green]En el peor de los casos, necesitas {optimal_attempts} intentos para adivinar un número entre 1 y {N}.[/green]\n")
 
     # —— Generate the secret number _______
     secret = random.randint(1, N)
 
-    # —— Let the player guess up to optimal_attempts times ——
+    # —— Let the player guess up to optimal_attempts times —— 
     guess_count = 0
     won = False
     while guess_count < optimal_attempts:
-        guess_str = input(f"Adivina el número (intento {guess_count + 1}/{optimal_attempts}): ").strip()
+        guess_str = console.input(f"[yellow]Adivina el número (intento {guess_count + 1}/{optimal_attempts}):[/yellow] ").strip()
         try:
             guess = int(guess_str)
         except ValueError:
-            print("Número inválido. Debe ser un entero entre 1 y", N)
+            console.print("[red]Número inválido. Debe ser un entero entre 1 y[/] [cyan]" + str(N) + "[/cyan]")
             continue
 
         if guess < 1 or guess > N:
-            print("Número fuera de rango. Debe ser entre 1 y", N)
+            console.print(f"[red]Número fuera de rango. Debe ser entre 1 y {N}.[/red]")
             continue
 
         guess_count += 1
@@ -148,20 +154,20 @@ def play_guessing(manager: PlayerManager) -> None:
             # Player wins: payout is 4× bet
             reward = bet * 4
             new_balance = player.account_balance + reward
-            print(f"¡Correcto! Ganaste {reward}.")
+            console.print(f"[bold green]¡Correcto! Ganaste {reward:.2f}.[/bold green]")
             won = True
             break
         else:
             # Not correct. Provide a hint, unless it was the last attempt.
             if guess < secret:
-                print("Más alto.")
+                console.print("[yellow]Más alto.[/yellow]")
             else:
-                print("Más bajo.")
+                console.print("[yellow]Más bajo.[/yellow]")
 
     # If did not win after all attempts → lose bet
     if not won:
         new_balance = player.account_balance - bet
-        print(f"Lo siento, no lo adivinaste. Perdiste {bet}. El número era {secret}.")
+        console.print(f"[bold red]Lo siento, no lo adivinaste. Perdiste {bet:.2f}. El número era {secret}.[/bold red]")
 
     # Build a descriptive history entry
     if won:
@@ -174,15 +180,15 @@ def play_guessing(manager: PlayerManager) -> None:
     # Update the player’s balance in JSON
     upd_res: OperationResult = manager.update_player(player_id, None, new_balance)
     if not upd_res.ok:
-        print("Error al actualizar balance:", upd_res.error)
+        console.print(f"[red]Error al actualizar balance:[/] {upd_res.error}")
         return
 
     # Record in player's history
     hist = PlayerHistory(player_id)
     push_res: OperationResult = hist.push(result_str)
     if not push_res.ok:
-        print("Error al registrar historial:", push_res.error)
+        console.print(f"[red]Error al registrar historial:[/] {push_res.error}")
 
     # Display final line for clarity
-    print("\nResultado Adivinanzas:")
-    print(result_str)
+    console.print("\n[bold cyan]Resultado Adivinanzas:[/bold cyan]")
+    console.print(f"{result_str}")

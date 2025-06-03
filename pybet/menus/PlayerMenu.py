@@ -1,7 +1,13 @@
 from typing import Optional
+from rich.console import Console
+from rich.table import Table
+from rich.text import Text
+
 from pybet.models.PlayerManager import PlayerManager
 from pybet.models.Player import Player
 from pybet.models.OperationResult import OperationResult
+
+console = Console()
 
 def manage_players() -> None:
     """
@@ -11,71 +17,79 @@ def manage_players() -> None:
     manager = PlayerManager()
 
     while True:
-        print("\n--- Gestionar Jugadores ---")
-        print("1. Listar todos los jugadores")
-        print("2. Agregar nuevo jugador")
-        print("3. Actualizar jugador")
-        print("4. Eliminar jugador")
-        print("0. Volver al menú principal")
-        sub: str = input("Seleccione una opción: ").strip()
+        console.print("\n[bold cyan]--- Gestionar Jugadores ---[/bold cyan]")
+        console.print("1. Listar todos los jugadores")
+        console.print("2. Agregar nuevo jugador")
+        console.print("3. Actualizar jugador")
+        console.print("4. Eliminar jugador")
+        console.print("0. Volver al menú principal")
+        sub: str = console.input("[yellow]Seleccione una opción:[/yellow] ").strip()
 
         if sub == '1':
             res: OperationResult = manager.get_all_players()
             if not res.ok:
-                print("Error:", res.error)
+                console.print(f"[red]Error:[/red] {res.error}")
             else:
                 players: list[Player] = res.data
                 if not players:
-                    print("No hay jugadores.")
+                    console.print("[italic]No hay jugadores.[/italic]")
                 else:
-                    print("\nJugadores:")
+                    # Construct table with Rich
+                    table = Table(title="Jugadores Registrados")
+                    table.add_column("ID", style="cyan", no_wrap=True)
+                    table.add_column("Nombre", style="magenta")
+                    table.add_column("Saldo", style="green", justify="right")
+                    table.add_column("Creado en", style="dim")
+
                     for p in players:
-                        print(f"- ID: {p.id} | Nombre: {p.name} | Saldo: {p.account_balance}")
+                        table.add_row(p.id, p.name, f"{p.account_balance:.2f}", p.created_at)
+
+                    console.print(table)
 
         elif sub == '2':
-            name: str = input("Ingrese nombre completo: ").strip()
-            bal_str: str = input("Ingrese saldo inicial: ").strip()
+            name: str = console.input("[yellow]Ingrese nombre completo:[/yellow] ").strip()
+            bal_str: str = console.input("[yellow]Ingrese saldo inicial:[/yellow] ").strip()
             try:
                 balance: float = float(bal_str)
                 res: OperationResult = manager.add_player(name, balance)
                 if res.ok:
                     p: Player = res.data
-                    print(f"Jugador creado: ID {p.id}, Nombre {p.name}, Saldo {p.account_balance}")
+                    console.print(f"[green]✔ Jugador creado:[/green] ID [bold]{p.id}[/bold], Nombre [bold]{p.name}[/bold], Saldo [bold]{p.account_balance:.2f}[/bold]")
                 else:
-                    print("Error:", res.error)
+                    console.print(f"[red]Error:[/red] {res.error}")
             except ValueError:
-                print("Saldo inválido. Debe ser un número.")
+                console.print("[red]Saldo inválido. Debe ser un número.[/red]")
 
         elif sub == '3':
-            pid: str = input("Ingrese ID de jugador a actualizar: ").strip()
-            new_name: Optional[str] = input("Nuevo nombre (dejar vacío para conservar): ").strip()
+            pid: str = console.input("[yellow]Ingrese ID de jugador a actualizar:[/yellow] ").strip()
+            new_name: Optional[str] = console.input("[yellow]Nuevo nombre (dejar vacío para conservar):[/yellow] ").strip()
             if new_name == "":
                 new_name = None
-            new_bal_str: str = input("Nuevo saldo (dejar vacío para conservar): ").strip()
+            new_bal_str: str = console.input("[yellow]Nuevo saldo (dejar vacío para conservar):[/yellow] ").strip()
             new_balance: Optional[float] = None
             if new_bal_str:
                 try:
                     new_balance = float(new_bal_str)
                 except ValueError:
-                    print("Saldo inválido. Abortando actualización.")
+                    console.print("[red]Saldo inválido. Abortando actualización.[/red]")
                     continue
             res: OperationResult = manager.update_player(pid, new_name, new_balance)
             if res.ok:
                 p: Player = res.data
-                print(f"Jugador actualizado: ID {p.id}, Nombre {p.name}, Saldo {p.account_balance}")
+                console.print(f"[green]✔ Jugador actualizado:[/green] ID [bold]{p.id}[/bold], Nombre [bold]{p.name}[/bold], Saldo [bold]{p.account_balance:.2f}[/bold]")
             else:
-                print("Error:", res.error)
+                console.print(f"[red]Error:[/red] {res.error}")
 
         elif sub == '4':
-            pid: str = input("Ingrese ID de jugador a eliminar: ").strip()
+            pid: str = console.input("[yellow]Ingrese ID de jugador a eliminar:[/yellow] ").strip()
             res: OperationResult = manager.delete_player(pid)
             if res.ok:
                 p: Player = res.data
-                print(f"Jugador eliminado: ID {p.id}, Nombre {p.name}")
+                console.print(f"[green]✔ Jugador eliminado:[/green] ID [bold]{p.id}[/bold], Nombre [bold]{p.name}[/bold]")
             else:
-                print("Error:", res.error)
+                console.print(f"[red]Error:[/red] {res.error}")
 
         elif sub == '0':
             break
         else:
-            print("Opción inválida, intente de nuevo.")
+            console.print("[red]Opción inválida, intente de nuevo.[/red]")
