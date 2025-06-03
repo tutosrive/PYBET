@@ -1,7 +1,6 @@
 from typing import List
 from rich.console import Console
 from rich.table import Table
-
 from pybet.logic.Backtracking import Backtracking
 from pybet.models.OperationResult import OperationResult
 
@@ -42,7 +41,7 @@ def optimal_betting_path() -> None:
 
             table = Table(title="Resultado de Apuesta Óptima")
             table.add_column("Saldo Inicial", justify="center", style="cyan")
-            table.add_column("Opciones", justify="center", style="magenta")
+            table.add_column("Opciones de Apuesta", justify="center", style="magenta")
             table.add_column("Secuencia Óptima", justify="center", style="green")
             table.add_column("Total Apostado", justify="center", style="yellow")
 
