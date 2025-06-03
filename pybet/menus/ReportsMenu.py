@@ -189,7 +189,7 @@ def _report_loss_counts(manager: PlayerManager) -> None:
         count = 0
         for action in p.history:
             low = action.lower()
-            if "perdió" in low or "perdio" in low:
+            if "lost" in low:
                 count += 1
         loss_list.append({"name": p.name, "loss_count": count})
 
