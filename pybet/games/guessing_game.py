@@ -1,4 +1,8 @@
 """
+Guessing game module for the PyBet application.
+
+This module implements the guessing game logic and user interface.
+
 Guessing Game (“Adivinanzas”) module with tail recursion to compute optimal attempts.
 
 This version first computes, via a tail‐recursive function, 
