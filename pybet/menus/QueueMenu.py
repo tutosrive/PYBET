@@ -1,3 +1,9 @@
+"""
+Queue management menu for the PyBet application.
+
+This module provides the interface for managing the waiting queue of players.
+"""
+
 from rich.console import Console
 from rich.table import Table
 

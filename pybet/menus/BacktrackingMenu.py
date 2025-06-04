@@ -1,3 +1,9 @@
+"""
+Backtracking menu for the PyBet application.
+
+This module provides the interface for finding the optimal betting path using backtracking algorithms.
+"""
+
 from typing import List
 from rich.console import Console
 from rich.table import Table

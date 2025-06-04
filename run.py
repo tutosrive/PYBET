@@ -1,3 +1,9 @@
+"""
+Script to initialize required directories and data files, then run the PyBet application.
+
+Creates logs and data directories if they do not exist, ensures initial data files are present, and starts the main application loop.
+"""
+
 from pathlib import Path
 from pybet.main import main
 

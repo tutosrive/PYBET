@@ -1,3 +1,9 @@
+"""
+Main entry point for the PyBet application.
+
+This module initializes required directories and data files, then launches the main menu loop for user interaction with the betting system.
+"""
+
 from rich.console import Console
 from rich.table import Table
 from rich.text import Text
@@ -12,6 +18,9 @@ from pybet.menus.ReportsMenu import generate_reports
 console = Console()
 
 def main():
+    """
+    Launch the main menu loop for the PyBet application, allowing users to manage players, play games, view history, manage the queue, find optimal betting paths, and generate reports.
+    """
     while True:
         console.print("\n[bold cyan]=== Menú Principal ===[/bold cyan]")
         console.print("1. Gestionar Jugadores")

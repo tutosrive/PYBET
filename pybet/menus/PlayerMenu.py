@@ -1,3 +1,9 @@
+"""
+Player management menu for the PyBet application.
+
+This module provides the interface for managing players, including adding, removing, and listing players in the system.
+"""
+
 from typing import Optional
 from rich.console import Console
 from rich.table import Table

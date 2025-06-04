@@ -1,3 +1,9 @@
+"""
+Reports menu for the PyBet application.
+
+This module provides the interface for generating various reports related to player balances, earnings, history, losses, and participation.
+"""
+
 from typing import List, Dict
 from pathlib import Path
 import csv
@@ -55,6 +61,7 @@ def generate_reports() -> None:
 # Report 1: Top Balances
 def _report_top_balances(manager: PlayerManager) -> None:
     """
+    Generate and display a report of players with the highest balances.
     Gathers all players, sorts them by account_balance descending,
     muestra tabla en pantalla y exporta a JSON+CSV.
     """
@@ -95,6 +102,7 @@ def _report_top_balances(manager: PlayerManager) -> None:
 # Report 2: Earnings Ranking
 def _report_earnings_ranking(manager: PlayerManager) -> None:
     """
+    Generate and display a ranking of players by total earnings.
     Shows player earnings ranking based on net earnings history stored in JSON file.
     Displays a table and exports to JSON and CSV.
     """
@@ -141,6 +149,7 @@ def _report_earnings_ranking(manager: PlayerManager) -> None:
 # Report 3: Player History
 def _report_player_history(manager: PlayerManager) -> None:
     """
+    Generate and display a report of a specific player's game history.
     Prompts for un ID de jugador, obtiene su historial via PlayerHistory,
     muestra en tabla y exporta a JSON+CSV.
     """
@@ -185,6 +194,7 @@ def _report_player_history(manager: PlayerManager) -> None:
 # Report 4: Loss Counts
 def _report_loss_counts(manager: PlayerManager) -> None:
     """
+    Generate and display a report of players with the most losses.
     Calcula cuántas veces cada jugador ha perdido,
     muestra tabla y exporta a JSON+CSV.
     """
@@ -231,6 +241,7 @@ def _report_loss_counts(manager: PlayerManager) -> None:
 # Report 5: Game Participation
 def _report_game_participation(manager: PlayerManager) -> None:
     """
+    Generate and display a report of player participation in games.
     Cuenta cuántas jugadas de “Tragamonedas” vs “Adivinanzas” hay en todos los historiales,
     muestra tabla y exporta a JSON+CSV.
     """
